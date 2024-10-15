@@ -1,92 +1,127 @@
-
-<!-- Functions for interacting with the database -->
-
-<?php 
-
-require_once 'dbConfig.php';
-
-function insertIntoStudentRecords($pdo, $full_name, $age, $email, $contact_number, $bachelor_degree, $university, $graduation_year, $registration_date) {
-
-	$sqlCheck = "SELECT COUNT(*) FROM users WHERE email = ? OR contact_number = ?";
-    $stmtCheck = $pdo->prepare($sqlCheck);
-    $stmtCheck->execute([$email, $contact_number]);
-    $count = $stmtCheck->fetchColumn();
-
-    // Step 2: If count > 0, then the user already exists
-    if ($count > 0) {
-		$error_message = "This field is required!";
-        echo "Error: A user with this email or contact number already exists.";
-        return false;
-    }
-
-	$sql = "INSERT INTO users (full_name, age, email, contact_number, bachelor_degree, university, graduation_year, registration_date) VALUES (?,?,?,?,?,?,?, ?)";
-
-	$stmt = $pdo->prepare($sql);
-
-	$executeQuery = $stmt->execute([$full_name, $age, $email, $contact_number, $bachelor_degree, $university, $graduation_year, $registration_date]);
-
-	if ($executeQuery) {
-		return true;	
-	} else {
-		echo "Something went wrong while inserting the data.";
-        return false;
-	}
+<?php require_once 'core/dbConfig.php'; ?>
+<?php require_once 'core/models.php'; ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Document</title>
+<style>
+body {
+    font-family: "Arial";
+    color: #333333;
+    background-image: url('https://t3.ftcdn.net/jpg/03/23/88/08/360_F_323880864_TPsH5ropjEBo1ViILJmcFHJqsBzorxUB.jpg');
 }
-
-function seeAllStudentRecords($pdo) {
-	$sql = "SELECT * FROM users";
-	$stmt = $pdo->prepare($sql);
-	$executeQuery = $stmt->execute();
-	if ($executeQuery) {
-		return $stmt->fetchAll();
-	}
+input {
+    font-size: 1.5em;
+    height: 50px;
+    width: 200px;
 }
-
-function getStudentByID($pdo, $user_id) {
-	$sql = "SELECT * FROM users WHERE user_id = ?";
-	$stmt = $pdo->prepare($sql);
-	if ($stmt->execute([$user_id])) {
-		return $stmt->fetch();
-	}
+table, th, td {
+    color: #333333;
+    width: 50%; 
+    margin: 0 auto; 
+    text-align: center;
 }
-
-function updateAStudent($pdo, $user_id ,$full_name, $age, $email, $contact_number, $bachelor_degree, $university, $graduation_year, $registration_date) {
-
-	$sql = "UPDATE users 
-				SET full_name = ?, 
-					age = ?, 
-					email = ?, 
-					contact_number = ?, 
-					bachelor_degree = ?, 
-					university = ?, 
-					graduation_year = ?,
-					registration_date = ?
-			WHERE user_id = ?";
-	$stmt = $pdo->prepare($sql);
-	
-	$executeQuery = $stmt->execute([$full_name, $age, $email, $contact_number, $bachelor_degree, $university, $graduation_year, $registration_date, $user_id]);
-
-	if ($executeQuery) {
-		return true;
-	}
+th, td {
+    padding: 10px;
 }
-
-
-
-function deleteAStudent($pdo, $user_id) {
-
-	$sql = "DELETE FROM users WHERE user_id = ?";
-	$stmt = $pdo->prepare($sql);
-
-	$executeQuery = $stmt->execute([$user_id]);
-
-	if ($executeQuery) {
-		return true;
-	}
-
+th {
+    white-space: nowrap;
 }
-
-
-
-
-?>
+.main {
+    width: 700px;
+    margin: 100px auto;
+    border: 5px solid white;
+    padding: 10px;
+    border-radius: 25px;
+    background-color: white;
+}
+.headline {
+    text-align: center;
+}
+input[type="text"], input[type="email"], input[type="number"], input[type="tel"], input[type="month"], input[type="datetime-local"] {
+    width: 100%; 
+    box-sizing: border-box; 
+}
+.regBttn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100px; 
+}
+.reg_form {
+    padding: 10px;
+    color: #333333;
+}
+.mainTable {
+    width: 1200px;
+    margin: 100px auto;
+    padding: 50px;
+    border-radius: 25px;
+    background-color: white;
+}
+.error-message {
+    display: none; 
+    position: absolute; 
+    background-color: #f44336; 
+    color: white; 
+    padding: 10px; 
+    border-radius: 5px; 
+    z-index: 1000; 
+    top: 50px; 
+    left: 50%; 
+    transform: translateX(-50%); 
+    transition: opacity 0.5s; 
+    opacity: 0; 
+}
+.error-message.show {
+    display: block; 
+    opacity: 1; 
+}
+</style>
+</head>
+<body>
+<div class="main">
+<div class="headline"><h1>Registration for Web Developer</h1></div>
+<form action="core/handleForms.php" method="POST">
+<div class="reg_form">
+<hr>
+<p style="font-size: 22px;"><b>Personal Background</b></p>
+<p><label for="full_name"><b>Full Name</b></label> <input type="text" name="full_name" required></p>
+<p><label for="age"><b>Age</b></label> <input type="number" id="age" name="age" min="1" max="99" required></p>
+<p><label for="email"><b>Email</b></label> <input type="email" name="email" required></p>
+<p><label for="contact_number"><b>Contact Number</b></label> <input type="tel" id="contact_number" name="contact_number" placeholder="09xx-xxx-xxxx" pattern="09[0-9]{2}-[0-9]{3}-[0-9]{4}" required></p>
+<p style="font-size: 22px;"><b>Educational Background</b></p>
+<p><label for="bachelor_degree"><b>Bachelor Degree</b></label> <input type="text" name="bachelor_degree" required></p>
+<p><label for="university"><b>University</b></label> <input type="text" name="university" required></p>
+<p><label for="graduation_year"><b>Graduation Year</b></label> <input type="month" name="graduation_year" required></p>
+<p><label for="registration_date"><b>Registration Date</b></label> <input type="datetime-local" name="registration_date" required></p>
+</div>
+<div class="regBttn"><p><input type="submit" name="insertNewStudentBtn"></p></div>
+</form>
+</div>
+<div class="mainTable">
+<table style="width:50%; margin-top: 50px;">
+<tr><p><h1>Database Registration Table</h1></p><hr>
+<th>ID</th><th>Full Name</th><th>Age</th><th>Email</th><th>Contact Number</th><th>Bachelor Degree</th><th>University</th><th>Graduation Year</th><th>Registration Date</th><th>Action</th></tr>
+<?php $seeAllStudentRecords = seeAllStudentRecords($pdo); ?>
+<?php foreach ($seeAllStudentRecords as $row) { ?>
+<tr>
+<td><?php echo $row['user_id']; ?></td>
+<td><?php echo $row['full_name']; ?></td>
+<td><?php echo $row['age']; ?></td>
+<td><?php echo $row['email']; ?></td>
+<td><?php echo $row['contact_number']; ?></td>
+<td><?php echo $row['bachelor_degree']; ?></td>
+<td><?php echo $row['university']; ?></td>
+<td><?php echo $row['graduation_year']; ?></td>
+<td><?php echo $row['registration_date']; ?></td>
+<td><a href="editstudent.php?user_id=<?php echo $row['user_id'];?>">Edit</a>
+<a href="deletestudent.php?user_id=<?php echo $row['user_id'];?>">Delete</a></td>
+</tr>
+<?php } ?>
+</table>
+</div>
+</body>
+</html>
